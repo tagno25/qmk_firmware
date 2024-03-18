@@ -221,6 +221,11 @@ extern layer_state_t layer_state;
 #    include "via.h"
 #endif
 
+
+#ifdef OPENRGB_ENABLE
+#    include "openrgb.h"
+#endif
+
 #ifdef WPM_ENABLE
 #    include "wpm.h"
 #endif
