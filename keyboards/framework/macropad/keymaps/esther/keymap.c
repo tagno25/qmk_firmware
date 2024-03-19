@@ -32,7 +32,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         TG(1),   XXXXXXX,   XXXXXXX, C(KC_A),
         KC_ENT,  XXXXXXX,   XXXXXXX, KC_DEL,
         C(KC_S), KC_A,      KC_V,    C(KC_X),
-        KC_PPLS, C(KC_EQL), C(KC_Z), C(KC_C),
+        KC_PPLS, C(KC_PEQL), C(KC_Z), C(KC_C),
         KC_PMNS, C(KC_MINS),C(KC_Y), C(KC_V)
     ),
      /* Numpad
@@ -52,7 +52,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      * 21 total
      */
     [1] = LAYOUT(
-        KC_ESC,  KC_CALC, KC_EQL,  KC_BSPC,
+        KC_ESC,  KC_CALC, KC_PEQL,  KC_BSPC,
         _______, KC_PSLS, KC_PAST, KC_PMNS,
         KC_P7,   KC_P8,   KC_P9,   KC_PPLS,
         KC_P4,   KC_P5,   KC_P6,   KC_PPLS,
