@@ -2,6 +2,8 @@
 
 I recently picked up my Framework 16, and wanted to run OpenRGB on it so I could make my RGB keyboard synced with my audio. I've figured it out, so here's a brief rundown on installing OpenRGB (in this example on Fedora), setting up a QMK environment, compiling and flashing your board.
 
+![keyboarddemo](https://github.com/Knucklesfan/qmk_firmware/assets/17733165/e8098114-72b8-497a-8c7d-08e8271e0859)
+
 PLEASE NOTE: VIA DOES **NOT** WORK WITH OPENRGB!
 
 You can find precompiled binaries for the RGB ANSI Keyboard and the RGB Macropad [HERE](https://github.com/Knucklesfan/qmk_firmware.git):
