@@ -21,9 +21,11 @@ enum framework_keycodes {
   // Custom keycode to change screen modes (e.g. enable external screen)
   KC_SCRN = SAFE_RANGE,
   FN_LOCK,
+  KC_CPLT,
 };
 
 extern bool bios_mode;
+extern bool is_suspended;
 
 // Uncomment this to show hotkey mode with capslock LED and backlight
 // hotkey mode on:  capslock ON,  RGB red

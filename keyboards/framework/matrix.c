@@ -52,6 +52,7 @@
 const adc10ksample_t ADC_THRESHOLD = (adc10ksample_t) 29000;
 
 bool have_slept = false;
+bool prev_lid_closed = false;
 
 adc10ksample_t to_voltage(adcsample_t sample) {
   int voltage = sample * 33000;
@@ -255,45 +256,37 @@ static adc10ksample_t read_adc(void) {
 
 /**
  * Handle the host going to sleep or the keyboard being idle
- * If the host is asleep the keyboard should reduce the scan rate and turn backlight off.
+ * TODO: If the host is asleep the keyboard should reduce the scan rate and turn backlight off.
  *
- * If the host is awake but the keyboard is idle it should enter a low-power state
+ * TODO: If the host is awake but the keyboard is idle it should enter a low-power state
  */
 bool handle_idle(void) {
-    bool asleep = !readPin(SLEEP_GPIO);
-    static uint8_t prev_asleep = -1;
-    if (prev_asleep != asleep) {
-        prev_asleep = asleep;
+    bool lid_closed = !readPin(SLEEP_GPIO);
+    bool lid_changed = lid_closed != prev_lid_closed;
+    prev_lid_closed = lid_closed;
+
+    /* If lid is closed and the keyboard is not currently suspended, we need to
+     * suspend the keyboard.
+     *
+     * This does not normally happen, unless the user has configured their OS
+     * to not suspend if lid is closed.
+     *
+     * There is no case where the lid is closed that the keyboard should stay active.
+     **/
+    if (lid_closed && !is_suspended) {
+        suspend_power_down();
     }
-    if (asleep) {
-        led_suspend();
-    } else {
-        led_wakeup();
+
+    /* If the lid is open and the system is transitioning between sleep states,
+     * QMK automatically handles suspending by monitoring USB suspend state.
+     *
+     * The only case where we need custom behavior is when the system was awake
+     * with lid closed and then the lid is opened. In this case we need to wake
+     * the keyboard.
+     */
+    if (!lid_closed && lid_changed) {
+        suspend_wakeup_init();
     }
-#ifdef RGB_MATRIX_ENABLE
-    if (rgb_matrix_get_suspend_state() != asleep) {
-        if (asleep) {
-            writePinLow(IS31FL3743A_ENABLE_GPIO);
-        } else {
-            writePinHigh(IS31FL3743A_ENABLE_GPIO);
-        }
-        rgb_matrix_set_suspend_state(asleep);
-    }
-#endif
-#ifdef BACKLIGHT_ENABLE
-    if (is_backlight_enabled() != !asleep) {
-        if (asleep) {
-            backlight_disable();
-            have_slept = true;
-        } else if (have_slept) {
-            // For some reason this will not set the proper value right after
-            // turning on. But the quantum code will have set it properly
-            // already, so there's no need to run this. Unless we actually wake
-            // up from sleep.
-            backlight_enable_old_level();
-        }
-    }
-#endif
 
     // TODO: Try this again later, but for now USB suspend should be fine
     // This seems to cause issues with waking up the host by keypresses
@@ -315,7 +308,9 @@ bool handle_idle(void) {
     //          host_sleep = timer_read32();
     //      }
     //  }
-    return false;
+
+    // Ignore keypresses if lid closed
+    return lid_closed;
 }
 
 /**
@@ -326,7 +321,12 @@ bool matrix_scan_custom(matrix_row_t current_matrix[]) {
 
     adc10ksample_t voltages[MATRIX_ROWS][MATRIX_COLS] = {};
 
-    if (handle_idle()) {
+    handle_idle();
+
+    /* If lid is closed, ignore keypresses. Otherwise pressing the on the lid (e.g. in
+     * a backpack) might cause the system to wake up.
+     **/
+    if (!readPin(SLEEP_GPIO)) {
         return false;
     }
 

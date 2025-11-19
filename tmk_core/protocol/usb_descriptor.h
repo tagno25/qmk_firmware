@@ -92,6 +92,8 @@ typedef struct {
     USB_Descriptor_Endpoint_t  Shared_INEndpoint;
 #endif
 
+    USB_Descriptor_Interface_t Rp2040_Reset_Interface;
+
 #ifdef CONSOLE_ENABLE
     // Console HID Interface
     USB_Descriptor_Interface_t Console_Interface;
@@ -172,6 +174,8 @@ enum usb_interfaces {
 #if defined(SHARED_EP_ENABLE) && !defined(KEYBOARD_SHARED_EP)
     SHARED_INTERFACE,
 #endif
+
+    RP2040_RESET_INTERFACE,
 
 #ifdef CONSOLE_ENABLE
     CONSOLE_INTERFACE,

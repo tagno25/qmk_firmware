@@ -1,0 +1,5 @@
+[USB\VID_32AC&PID_0013]
+Plugin=rp_pico
+Flags=internal
+Icon=input-keyboard
+CounterpartGuid=BLOCK\VEN_2E8A&DEV_0003

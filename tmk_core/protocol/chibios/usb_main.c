@@ -43,6 +43,7 @@
 #include "usb_device_state.h"
 #include "usb_descriptor.h"
 #include "usb_driver.h"
+#include "platforms/bootloader.h"
 
 #ifdef NKRO_ENABLE
 #    include "keycode_config.h"
@@ -73,6 +74,20 @@ static void keyboard_idle_timer_cb(struct ch_virtual_timer *, void *arg);
 
 report_keyboard_t keyboard_report_sent = {{0}};
 report_mouse_t    mouse_report_sent    = {0};
+
+#if defined(FWUPD_CAP)
+static uint8_t fwupd_descriptor_set[] __attribute__((aligned(4))) = {
+    // Generated with `~/clone/fwupd/contrib/generate-ds20.py fwup.quirk`
+    0x50, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x3d, 0x72, 0x70, 0x5f, 0x70, 0x69,
+    0x63, 0x6f, 0x0a, 0x46, 0x6c, 0x61, 0x67, 0x73, 0x3d, 0x69, 0x6e, 0x74,
+    0x65, 0x72, 0x6e, 0x61, 0x6c, 0x0a, 0x49, 0x63, 0x6f, 0x6e, 0x3d, 0x69,
+    0x6e, 0x70, 0x75, 0x74, 0x2d, 0x6b, 0x65, 0x79, 0x62, 0x6f, 0x61, 0x72,
+    0x64, 0x0a, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x65, 0x72, 0x70, 0x61, 0x72,
+    0x74, 0x47, 0x75, 0x69, 0x64, 0x3d, 0x42, 0x4c, 0x4f, 0x43, 0x4b, 0x5c,
+    0x56, 0x45, 0x4e, 0x5f, 0x32, 0x45, 0x38, 0x41, 0x26, 0x44, 0x45, 0x56,
+    0x5f, 0x30, 0x30, 0x30, 0x33
+};
+#endif
 
 #if defined(MSOS2_CAP)
 static uint8_t msos_descriptor_set[] __attribute__((aligned(4))) = {
@@ -651,6 +666,21 @@ static bool usb_request_hook_cb(USBDriver *usbp) {
      *  4,5: (LSB,MSB) wIndex
      *  6,7: (LSB,MSB) wLength (number of bytes to transfer if there is a data phase) */
 
+    if (((usbp->setup[0] & USB_RTYPE_TYPE_MASK) == USB_RTYPE_TYPE_CLASS) && ((usbp->setup[0] & USB_RTYPE_RECIPIENT_MASK) == USB_RTYPE_RECIPIENT_INTERFACE)) {
+        // dprint("  TYPE_CLASS, RECIPIENT_INTERFACE\n");
+        if ((usbp->setup[0] & USB_RTYPE_DIR_MASK) == USB_RTYPE_DIR_HOST2DEV) {
+            if (usbp->setup[4] == RP2040_RESET_INTERFACE) {
+                switch (usbp->setup[1]) { /* bRequest */
+                    case 0x01: // RESET_REQUEST_BOOTSEL
+                    case 0x02: // RESET_REQUEST_FLASH
+                        dprint("  Reset interface\n");
+                        bootloader_jump();
+                    break;
+                }
+            }
+        }
+    }
+
     /* Handle HID class specific requests */
     if (((usbp->setup[0] & USB_RTYPE_TYPE_MASK) == USB_RTYPE_TYPE_CLASS) && ((usbp->setup[0] & USB_RTYPE_RECIPIENT_MASK) == USB_RTYPE_RECIPIENT_INTERFACE)) {
         switch (usbp->setup[0] & USB_RTYPE_DIR_MASK) {
@@ -769,6 +799,33 @@ static bool usb_request_hook_cb(USBDriver *usbp) {
         return TRUE;
     }
 
+#if defined(FWUPD_CAP)
+    // if (usbp->setup[0] == 0xC0) {
+    //     dprintf("zoid. Vendor request\n");
+    //     dprintf("zoid:\n  bmRequestType: %d\n  bRequest: %d\n  wValue: %d %d\n  wIndex: %d %d\n wLength: %d %d\n",
+    //         usbp->setup[0], usbp->setup[1], usbp->setup[2], usbp->setup[3], usbp->setup[4], usbp->setup[5], usbp->setup[6], usbp->setup[7]);
+    // }
+    /* Handle Vendor Specific Request */
+    if (
+        //usbp->setup[0] == (USB_RTYPE_TYPE_VENDOR | USB_RTYPE_DIR_HOST2DEV | USB_RTYPE_RECIPIENT_DEVICE)
+        usbp->setup[0] == 0xC0
+        // Microsoft vendor code = 0x01
+        // FWUPD     vendor code = 0x2a
+        // wRequest
+        && usbp->setup[1] == 0x2a
+        // wValue
+        && usbp->setup[2] == 0x00 && usbp->setup[3] == 0x00
+        // wIndex: MS_OS_20_DESCRIPTOR_INDEX
+        && usbp->setup[4] == 0x07 && usbp->setup[5] == 0x00
+        // wLength: 0x0059
+        && usbp->setup[6] == 0x59 && usbp->setup[7] == 0x00
+        ) {
+        //dprint("zoid: Detected MS OS 2.0 descriptor request\n");
+        usbSetupTransfer(usbp, &fwupd_descriptor_set[0], 0x59, NULL);
+        return TRUE;
+    }
+#endif
+
 #if defined(MSOS2_CAP)
     /* Handle Vendor Specific Request */
     //if (((usbp->setup[0] & USB_RTYPE_TYPE_MASK) == USB_RTYPE_TYPE_VENDOR) && ((usbp->setup[0] & USB_RTYPE_RECIPIENT_MASK) == USB_RTYPE_RECIPIENT_DEVICE)) {
@@ -781,17 +838,19 @@ static bool usb_request_hook_cb(USBDriver *usbp) {
     if (
         //usbp->setup[0] == (USB_RTYPE_TYPE_VENDOR | USB_RTYPE_DIR_HOST2DEV | USB_RTYPE_RECIPIENT_DEVICE)
         usbp->setup[0] == 0xC0
-        // Microsoft vendor code
-        && usbp->setup[1] == 0x01
+        // Microsoft vendor code = 0x01
+        // Framework vendor code = 0x2a
+        && usbp->setup[1] == 0x2a
         // wValue
         && usbp->setup[2] == 0x00 && usbp->setup[3] == 0x00
         // wIndex: MS_OS_20_DESCRIPTOR_INDEX
         && usbp->setup[4] == 0x07 && usbp->setup[5] == 0x00
         // wLength: 0x0048
-        && usbp->setup[6] == 0x48 && usbp->setup[7] == 0x00
+        && usbp->setup[6] == sizeof(fwupd_descriptor_set) && usbp->setup[7] == 0x00
         ) {
         //dprint("zoid: Detected MS OS 2.0 descriptor request\n");
-        usbSetupTransfer(usbp, &msos_descriptor_set[0], 0x48, NULL);
+        // usbSetupTransfer(usbp, &msos_descriptor_set[0], 0x48, NULL);
+        usbSetupTransfer(usbp, &fwupd_descriptor_set[0], sizeof(fwupd_descriptor_set), NULL);
         return TRUE;
     }
     //dprint("zoid: After\n");

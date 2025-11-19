@@ -493,7 +493,7 @@ const USB_Descriptor_Bos_t PROGMEM BosDescriptor = {
     },
     // 3 Bytes (=> 5 Bytes)
     // Value must be header + each cap
-#if defined(MSOS2_CAP)
+#if defined(MSOS2_CAP) || defined(FWUPD_CAP)
     .TotalLength                = 0x0028,
     .NumDeviceCaps              = 0x02,
 #else
@@ -508,9 +508,39 @@ const USB_Descriptor_Bos_t PROGMEM BosDescriptor = {
             .Type = 16,
         },
         // 5 Bytes (=> 12 Bytes / 0x0C Bytes)
-        .DevCapabilityType      = 2,
+        .DevCapabilityType      = 2, // USB 2.0 Extension Descriptor
         .Bytes                  = {0x00, 0x00, 0x00, 0x00},
     },
+
+#ifdef FWUPD_CAP
+    // See https://fwupd.github.io/libfwupdplugin/ds20.html
+    .MsosCap       = {
+        // 2 Bytes (=> 7 Bytes)
+        .Header = {
+            .Size = sizeof(USB_Descriptor_Capability_Msos_t),
+            .Type = 16,
+        },
+        // 5 Bytes (=> 12 Bytes / 0x0C Bytes)
+        .DevCapabilityType      = 5, // Platform
+        .Reserved               = 0,
+        // FWUPD {010aec63-f574-52cd-9dda-2852550d94f0}
+        .PlatformCapabilityId   = {
+            0x63, 0xec, 0x0a, 0x01,
+            0x74, 0xf5, 0xcd, 0x52,
+            0x9d, 0xda, 0x28, 0x52,
+            0x55, 0x0d, 0x94, 0xf0
+        },
+        .Set                    = {{
+            // rp-pico protocol supported since fwupd 2.0.2
+            // 0x00020002
+            .WindowsVersion     = {0x02, 0x00, 0x02, 0x00},
+            // Length of the data returned by control request
+            .TotalLength        = 0x0059,
+            .VendorCode         = 0x2a,
+            .AltEnumCode        = 0,
+        }},
+    },
+#endif // FWUPD_CAP
 
 #ifdef MSOS2_CAP
     // 28 Bytes (0x1C)
@@ -738,6 +768,19 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor = {
         .PollingIntervalMS      = USB_POLLING_INTERVAL_MS
     },
 #endif
+    .Rp2040_Reset_Interface = {
+        .Header = {
+            .Size               = sizeof(USB_Descriptor_Interface_t),
+            .Type               = DTYPE_Interface
+        },
+        .InterfaceNumber        = RP2040_RESET_INTERFACE,
+        .AlternateSetting       = 0x00,
+        .TotalEndpoints         = 0,
+        .Class                  = 0xFF,
+        .SubClass               = 0x00, // RESET_INTERFACE_SUBCLASS
+        .Protocol               = 0x01, // RESET_INTERFACE_PROTOCOL
+        .InterfaceStrIndex      = NO_DESCRIPTOR
+    },
 
 #ifdef CONSOLE_ENABLE
     /*
