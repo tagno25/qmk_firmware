@@ -6,7 +6,7 @@ I recently picked up my Framework 16, and wanted to run OpenRGB on it so I could
 
 PLEASE NOTE: VIA DOES **NOT** WORK WITH OPENRGB!
 
-You can find precompiled binaries for the RGB ANSI Keyboard and the RGB Macropad [HERE](https://github.com/Knucklesfan/qmk_firmware.git):
+You can find precompiled binaries for the RGB ANSI Keyboard and the RGB Macropad [HERE](https://github.com/tagno25/qmk_firmware/releases/tag/latest):
 
 If you somehow screw this up, Framework's official binaries can be found [HERE](https://github.com/FrameworkComputer/qmk_firmware/releases)
 
@@ -31,7 +31,7 @@ python3 -m pip install --user qmk
 
 # 2. Downloading the repo
 
-Before running `qmk setup`, you should probably have my repo downloaded. I've pushed my fix for direct mode to https://github.com/tagno25/qmk_firmware, but as of writing have not been merged yet. To download my repository, run
+Before running `qmk setup`, you should probably have my repo downloaded. To download my repository, run
 
 ```
 git clone https://github.com/Knucklesfan/qmk_firmware.git
@@ -50,7 +50,7 @@ Once compilation is finished, you can find the compiled firmwares in the root di
 
 # 4. Flashing
 
-You can find precompiled binaries for the RGB ANSI Keyboard and the RGB Macropad [HERE](https://github.com/Knucklesfan/qmk_firmware.git):
+You can find precompiled binaries for the RGB ANSI Keyboard and the RGB Macropad [HERE](https://github.com/tagno25/qmk_firmware/releases/tag/latest):
 
 If you somehow screw this up, Framework's official binaries can be found [HERE](https://github.com/FrameworkComputer/qmk_firmware/releases)
 Both the official and unofficial binaries flash the exact same way.
@@ -102,7 +102,7 @@ Q: Help! Whenever I start OpenRGB after setting up the keyboard in QMK, it hangs
 A: Make sure you compiled the firmware with the keymap `openrgb` and not `default` or any others.
 
 Q: OpenRGB gives me an I2C/USB error, and the keyboard doesn't work
-A: You need to make sure that you restarted after installing the udev rules. If you're using the flatpak or appimage, you'll need to manually install the OpenRGB I2C/USB UDEV rules. You can find more [here](https://openrgb.org/udev.html)
+A: You need to make sure that you restarted after installing the udev rules. If you're using the flatpak or appimage, you'll need to manually install the OpenRGB I2C/USB UDEV rules. You can find more [here](https://openrgb.org/udev.html).  If it still doesn't show up in OpenRGB, you may neet to manually install the udev rules in the udev folder.
 
 Q: How can I go back to the stock firmware?
 A: Links to the stock firmware and instructions on flashing is provided during step 4
@@ -121,19 +121,10 @@ A: Please don't
 
 If you have any issues with this guide, or my fork, let me know!
 
-# THIS IS THE DEVELOP BRANCH
-
-Warning- This is the `develop` branch of QMK Firmware. You may encounter broken code here. Please see [Breaking Changes](https://docs.qmk.fm/#/breaking_changes) for more information.
 
 # Quantum Mechanical Keyboard Firmware
 
-[![Current Version](https://img.shields.io/github/tag/qmk/qmk_firmware.svg)](https://github.com/qmk/qmk_firmware/tags)
-[![Discord](https://img.shields.io/discord/440868230475677696.svg)](https://discord.gg/Uq7gcHh)
-[![Docs Status](https://img.shields.io/badge/docs-ready-orange.svg)](https://docs.qmk.fm)
-[![GitHub contributors](https://img.shields.io/github/contributors/qmk/qmk_firmware.svg)](https://github.com/qmk/qmk_firmware/pulse/monthly)
-[![GitHub forks](https://img.shields.io/github/forks/qmk/qmk_firmware.svg?style=social&label=Fork)](https://github.com/qmk/qmk_firmware/)
-
-This is a keyboard firmware based on the [tmk\_keyboard firmware](https://github.com/tmk/tmk_keyboard) with some useful features for Atmel AVR and ARM controllers, and more specifically, the [OLKB product line](https://olkb.com), the [ErgoDox EZ](https://ergodox-ez.com) keyboard, and the [Clueboard product line](https://clueboard.co).
+This is fork of the FrameworkComputer [qmk_firmware](https://github.com/FrameworkComputer/qmk_firmware)
 
 ## Documentation
 
@@ -141,23 +132,6 @@ This is a keyboard firmware based on the [tmk\_keyboard firmware](https://github
 
 The docs are powered by [Docsify](https://docsify.js.org/) and hosted on [GitHub](/docs/). They are also viewable offline; see [Previewing the Documentation](https://docs.qmk.fm/#/contributing?id=previewing-the-documentation) for more details.
 
-You can request changes by making a fork and opening a [pull request](https://github.com/qmk/qmk_firmware/pulls), or by clicking the "Edit this page" link at the bottom of any page.
-
-## Supported Keyboards
-
-* [Planck](/keyboards/planck/)
-* [Preonic](/keyboards/preonic/)
-* [ErgoDox EZ](/keyboards/ergodox_ez/)
-* [Clueboard](/keyboards/clueboard/)
-* [Cluepad](/keyboards/clueboard/17/)
-* [Atreus](/keyboards/atreus/)
-
-The project also includes community support for [lots of other keyboards](/keyboards/).
-
-## Maintainers
-
-QMK is developed and maintained by Jack Humbert of OLKB with contributions from the community, and of course, [Hasu](https://github.com/tmk). The OLKB product firmwares are maintained by [Jack Humbert](https://github.com/jackhumbert), the Ergodox EZ by [ZSA Technology Labs](https://github.com/zsa), the Clueboard by [Zach White](https://github.com/skullydazed), and the Atreus by [Phil Hagelberg](https://github.com/technomancy).
-
 ## Official Website
 
-[qmk.fm](https://qmk.fm) is the official website of QMK, where you can find links to this page, the documentation, and the keyboards supported by QMK.
+[qmk.fm](https://qmk.fm) is the official website of QMK, where you can find links the documentation and the keyboards supported by QMK.

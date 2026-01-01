@@ -1,0 +1,5 @@
+# Framework Laptop 16 Keyboard Module - ANSI
+SUBSYSTEM=="usb|hidraw", ATTRS{idVendor}=="32ac", ATTRS{idProduct}=="0012", TAG+="uaccess"
+# Framework Laptop 16 Keyboard Module - RGB Macropad
+SUBSYSTEM=="usb|hidraw", ATTRS{idVendor}=="32ac", ATTRS{idProduct}=="0013", TAG+="uaccess"
+
