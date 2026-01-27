@@ -5,18 +5,6 @@
 
 #include "quantum.h"
 
-#ifdef KEYBOARD_framework_ansi
-    #include "ansi.h"
-#elif KEYBOARD_framework_iso
-    #include "iso.h"
-#elif KEYBOARD_framework_jis
-    #include "jis.h"
-#elif KEYBOARD_framework_numpad
-    #include "numpad.h"
-#elif KEYBOARD_framework_macropad
-    #include "macropad.h"
-#endif
-
 enum framework_keycodes {
   // Custom keycode to change screen modes (e.g. enable external screen)
   KC_SCRN = SAFE_RANGE,

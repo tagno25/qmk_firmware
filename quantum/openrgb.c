@@ -23,6 +23,7 @@
 #include "openrgb.h"
 #include "raw_hid.h"
 #include "string.h"
+#include "keymap_introspection.h"
 #include <color.h>
 
 #if !defined(OPENRGB_DIRECT_MODE_STARTUP_RED)
@@ -37,7 +38,10 @@
 #    define OPENRGB_DIRECT_MODE_STARTUP_BLUE 255
 #endif
 
+#ifndef OPENRGB_DIRECT_MODE_UNBUFFERED
 RGB                  g_openrgb_direct_mode_colors[RGB_MATRIX_LED_COUNT] = {[0 ... RGB_MATRIX_LED_COUNT - 1] = {OPENRGB_DIRECT_MODE_STARTUP_GREEN, OPENRGB_DIRECT_MODE_STARTUP_RED, OPENRGB_DIRECT_MODE_STARTUP_BLUE}};
+#endif
+
 static const uint8_t openrgb_rgb_matrix_effects_indexes[]           = {
     1,  2,
 
@@ -276,6 +280,7 @@ void openrgb_get_led_info(uint8_t *data) {
         uint8_t row   = 0;
         uint8_t col   = 0;
         uint8_t found = 0;
+	uint16_t led_kc = 0;
 
         for (row = 0; row < MATRIX_ROWS; row++) {
             for (col = 0; col < MATRIX_COLS; col++) {
@@ -290,11 +295,18 @@ void openrgb_get_led_info(uint8_t *data) {
             }
         }
 
-        if (col >= MATRIX_COLS || row >= MATRIX_ROWS) {
+        if (col > MATRIX_COLS || row > MATRIX_ROWS) {
             raw_hid_buffer[data_idx + 7] = KC_NO;
         }
         else {
-            raw_hid_buffer[data_idx + 7] = pgm_read_byte(&g_led_config.matrix_co[row][col]);
+            led_kc = keycode_at_keymap_location_raw(0,row,col);
+	    if (led_kc == KC_TRANSPARENT){
+                raw_hid_buffer[data_idx + 7] = 0xff;//https://gitlab.com/CalcProgrammer1/OpenRGB/-/blob/master/Controllers/QMKController/QMKKeycodes.h
+            } else if (led_kc == 0x5221) {//Function key
+                raw_hid_buffer[data_idx + 7] = KC_TRANSPARENT;
+	    } else {
+                raw_hid_buffer[data_idx + 7] = led_kc;
+	    }
         }
     }
 }
@@ -347,22 +359,31 @@ void openrgb_direct_mode_set_single_led(uint8_t *data) {
         return;
     }
 
-    g_openrgb_direct_mode_colors[led].r = r;
-    g_openrgb_direct_mode_colors[led].g = g;
-    g_openrgb_direct_mode_colors[led].b = b;
+    #ifdef OPENRGB_DIRECT_MODE_UNBUFFERED
+        rgb_matrix_set_color(led, r, g, b);
+    #else
+        g_openrgb_direct_mode_colors[led].r = r;
+        g_openrgb_direct_mode_colors[led].g = g;
+        g_openrgb_direct_mode_colors[led].b = b;
+    #endif
 
     raw_hid_buffer[RAW_EPSIZE - 2] = OPENRGB_SUCCESS;
 }
 void openrgb_direct_mode_set_leds(uint8_t *data) {
-    const uint8_t first_led   = data[1];
-    const uint8_t number_leds = data[2];
+    const uint8_t number_leds = data[1];
 
     for (uint8_t i = 0; i < number_leds; i++) {
-        const uint8_t color_idx = first_led + i;
-        const uint8_t data_idx  = i * 3;
+        #ifdef OPENRGB_DIRECT_MODE_UNBUFFERED
+            uint8_t *p = data + i * 4 + 2;
+            rgb_matrix_set_color(p[0], p[1], p[2], p[3]);
+        #else
 
-        g_openrgb_direct_mode_colors[color_idx].r = data[data_idx + 3];
-        g_openrgb_direct_mode_colors[color_idx].g = data[data_idx + 4];
-        g_openrgb_direct_mode_colors[color_idx].b = data[data_idx + 5];
+            const uint8_t data_idx  = i * 4;
+            const uint8_t color_idx = data[data_idx + 2];
+
+            g_openrgb_direct_mode_colors[color_idx].r = data[data_idx + 3];
+            g_openrgb_direct_mode_colors[color_idx].g = data[data_idx + 4];
+            g_openrgb_direct_mode_colors[color_idx].b = data[data_idx + 5];
+        #endif
     }
 }

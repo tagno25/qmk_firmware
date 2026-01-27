@@ -3,6 +3,11 @@
 
 #include QMK_KEYBOARD_H
 
+enum _layers {
+     _NUMLOCK,
+     _FN,
+     _FACTORY,
+};
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      /*
@@ -60,3 +65,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_P0,   KC_P0,   KC_PDOT, KC_PENT
     )
 };
+
+void keyboard_post_init_user(void) {
+    // Sync initial numlock state from the host
+    if (host_keyboard_led_state().num_lock) {
+        layer_on(_NUMLOCK);
+    } else {
+        layer_off(_FN);
+    }
+}
